@@ -59,6 +59,7 @@ export const createUser = async (req,res) => {
             })
         }
 
+
         //farklı kaydetme methodu
 
         // const savedUser = await User.create({
@@ -77,6 +78,7 @@ export const createUser = async (req,res) => {
             data:savedUser
         })
     } catch (error) {
+        //duplicate hatası
         if(error.code === 11000){
             return res.status(400).json({
                 success:false,
@@ -143,6 +145,12 @@ export const deleteUser = async (req,res) => {
                 message:"Kullanıcı bulunamadı"
             })
         }
+
+        res.status(200).json({
+            success:true,
+            message:"Silindi",
+            data:deletedUser
+        })
 
     } catch (error) {
         res.status(500).json({
