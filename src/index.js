@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import userRoutes from "./routes/userRoutes.js"
+import creditCardRoutes from "./routes/creditCardRoutes.js"
 
 dotenv.config();
 connectDB();
@@ -24,6 +25,8 @@ app.get("/",(req,res)=> {
 })
 
 app.use("/users", userRoutes)
+app.use("/credit-cards", creditCardRoutes)
+
 
 
 
