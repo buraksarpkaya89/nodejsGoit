@@ -7,6 +7,9 @@ import {
     deleteCreditCard
 } from "../controllers/creditCardController.js"
 
+import {createCreditCardSchema,updateCreditCardSchema} from "../validators/creditCardValidator.js"
+import {validateRequest} from "../middleware/validation.js"
+
 const router = express.Router()
 
 //GET /credit card
@@ -17,10 +20,10 @@ router.get("/", getAllCreditCards)
 router.get("/:id", getCreditCardById)
 
 // post 
-router.post("/",createCreditCard)
+router.post("/",validateRequest(createCreditCardSchema),createCreditCard)
 
 //put 
-router.put("/:id", updateCreditCard)
+router.put("/:id",validateRequest(updateCreditCardSchema), updateCreditCard)
 
 // delete
 
