@@ -1,16 +1,38 @@
 import User from "../db/models/User.js";
+import * as userService from "../services/userServices.js"
+import { parseFilterParams } from "../utils/parseFilterParams.js";
+
+import { parsePaginationParams } from "../utils/parsePaginationParams.js";
+import { parseSortParams } from "../utils/parseSortParams.js";
 
 // Tüm kullanıcıları getiren fonksiyon
 
 export const getAllUsers = async (req,res) => {
     try {
-        //Tüm kullanıcılaro tarihe göre azalan sırada getir
-        const users = await User.find().sort({createdAt: -1})
+
+        // query parametrelerini parse et
+
+        const {page,perPage} = parsePaginationParams(req.query)
+        const {sortOrder,sortBy} = parseSortParams(req.query)
+        const filter = parseFilterParams(req.query)
+        
+
+        const result = await userService.getAllUsers({
+            page,
+            perPage,
+            sortOrder,
+            sortBy,
+            filter
+        })
+
+
+        //Tüm kullanıcıları tarihe göre azalan sırada getir
+        // const users = await User.find().sort({createdAt: -1})
 
         res.status(200).json({
             success:true,
-            count:users.length,
-            data:users
+            // count:users.length,
+            ...result
         })
     } catch (error) {
         res.status(500).json({
