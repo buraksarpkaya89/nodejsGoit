@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim:true,
     },
+    password: {
+        type: String,
+        required: [true,"Şifre alanı zorunludur"]
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -21,6 +25,14 @@ const userSchema = new mongoose.Schema({
 },{
     timestamps:{createdAt:true, updatedAt:false}
 })
+// {name:"Burak",email:"burak@gmail.com"}
+//şifre kısmını JSON Response'dan çıkart
+
+userSchema.methods.toJson = function (){
+    const obj = this.toObject();
+    delete obj.password;
+    return obj
+}
 
 const User = mongoose.model("User",userSchema)
 
