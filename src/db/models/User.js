@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ROLES } from "../../constants/index.js";
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -17,6 +18,11 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true,"Şifre alanı zorunludur"]
+    },
+    role:{
+        type: String,
+        enum: [ROLES.ADMIN,ROLES.MODERATOR,ROLES.USER],
+        default:ROLES.USER
     },
     createdAt: {
         type: Date,

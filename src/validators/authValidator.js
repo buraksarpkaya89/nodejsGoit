@@ -1,4 +1,5 @@
 import Joi from "joi"
+import { ROLES } from "../constants/index.js"
 
 export const registerUserSchema = Joi.object({
     name: Joi.string().trim().min(2).max(10).required()
@@ -20,11 +21,15 @@ export const registerUserSchema = Joi.object({
             'string.empty': "Şifre alanı boş olamaz",
             'any.required': "Şifre alanı zorunludur"
 
+        }),
+    role: Joi.string().valid(...Object.values(ROLES)).default(ROLES.USER)
+        .messages({
+            "any.only": "Geçersiz rol seçimi"
         })
 })
 
 export const loginUserSchema = Joi.object({
-   
+
     email: Joi.string().email().lowercase().trim().required()
         .messages({
             'string.email': "Geçerli bir email giriniz"

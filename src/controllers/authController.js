@@ -60,6 +60,11 @@ export const logoutUserController = async (req, res) => {
         res.clearCookie("sessionId")
         res.clearCookie("refreshToken")
 
+        res.status(200).json({
+            success:true,
+            message:"Çıkış başarılı"
+        })
+
     } catch (error) {
         res.status(error.status || 500).json({
             success: false,

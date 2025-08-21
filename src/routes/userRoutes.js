@@ -10,24 +10,26 @@ import {
 
 import {validateRequest} from "../middleware/validation.js"
 import {createUserSchema,updateUserSchema} from "../validators/userValidator.js"
+import { requireAdmin,requireAdminOrModerator } from "../middleware/checkRoles.js"
+import { authenticate } from "../middleware/auth.js"
 
 const router = express.Router()
 
 //GET /users
 
-router.get("/", getAllUsers)
+router.get("/",authenticate,requireAdminOrModerator, getAllUsers)
 
 //Get byId
-router.get("/:id", getUserById)
+router.get("/:id",authenticate, getUserById)
 
 // post 
-router.post("/",validateRequest(createUserSchema),createUser)
+router.post("/",authenticate,requireAdmin,validateRequest(createUserSchema),createUser)
 
 //put 
-router.put("/:id",validateRequest(updateUserSchema), updateUser)
+router.put("/:id",authenticate,requireAdmin,validateRequest(updateUserSchema), updateUser)
 
 // delete
 
-router.delete("/:id",deleteUser)
+router.delete("/:id",authenticate,requireAdmin,deleteUser)
 
 export default router

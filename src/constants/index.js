@@ -8,3 +8,12 @@ export const SORT_ORDER = {
 
 export const FIFTEEN_MINUTES = 15 * 60 * 1000;
 export const ONE_DAY = 1000 * 60 * 60 * 24;
+
+
+// Kullanıcı rolleri 
+
+export const ROLES = {
+    ADMIN: "admin",
+    USER: "user",
+    MODERATOR: "moderator"
+}
