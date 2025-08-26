@@ -1,5 +1,5 @@
 import { ONE_DAY } from "../constants/index.js"
-import { registerUser, loginUser, logoutUser, refreshUsersSession } from "../services/authServices.js"
+import { registerUser, loginUser, logoutUser, refreshUsersSession, requestResetToken, resetPassword } from "../services/authServices.js"
 
 const setupSession = (res, session) => {
 
@@ -89,6 +89,42 @@ export const refreshUsersSessionController = async (req, res) => {
             data: {
                 accessToken: session.accessToken
             }
+        })
+    } catch (error) {
+        res.status(error.status || 500).json({
+            success: false,
+            message: "Sunucu Hatası",
+            error: error.message
+        })
+    }
+}
+
+// Şifre sıfırlama ve Email
+
+export const requestResetEmailController = async(req,res) => {
+    try {
+        await requestResetToken(req.body.email)
+        res.json({
+            success:true,
+            message:"Şifre sıfırlama maili başarıyla gönderildi",
+            data:{}
+        })
+    } catch (error) {
+        res.status(error.status || 500).json({
+            success: false,
+            message: "Sunucu Hatası",
+            error: error.message
+        })
+    }
+}
+
+export const resetPasswordController = async (req,res) =>{
+    try {
+        await resetPassword(req.body)
+         res.json({
+            success:true,
+            message:"Şifre sbaşarıyla sıfırlandı",
+            data:{}
         })
     } catch (error) {
         res.status(error.status || 500).json({

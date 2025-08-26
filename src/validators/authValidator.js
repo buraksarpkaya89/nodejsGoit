@@ -42,3 +42,26 @@ export const loginUserSchema = Joi.object({
 
         })
 }).min(1) // en az 1 tane alan güncellenmeli
+
+export const requestResetEmailSchema = Joi.object({
+    email: Joi.string().email().required()
+        .messages({
+            'string.empty': "email alanı boş olamaz",
+            'any.required': "email alanı zorunludur"
+
+        })
+})
+
+export const resetPasswordSchema = Joi.object({
+    password: Joi.string().required()
+        .messages({
+            'string.empty': "şifre alanı boş olamaz",
+            'any.required': "şifre alanı zorunludur"
+
+        }),
+    token: Joi.string().required()
+        .messages({
+            'string.empty': "Token alanı boş olamaz",
+            'any.required': "Token alanı zorunludur"
+        })
+})

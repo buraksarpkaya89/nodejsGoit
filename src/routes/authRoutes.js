@@ -4,10 +4,12 @@ import {
     registerUserController,
     loginUserController,
     logoutUserController,
-    refreshUsersSessionController
+    refreshUsersSessionController,
+    requestResetEmailController,
+    resetPasswordController
 } from "../controllers/authController.js"
 
-import {registerUserSchema,loginUserSchema} from "../validators/authValidator.js"
+import {registerUserSchema,loginUserSchema, requestResetEmailSchema, resetPasswordSchema} from "../validators/authValidator.js"
 
 
 const router = express.Router()
@@ -27,5 +29,13 @@ router.post("/logout",logoutUserController)
 //token yenileme
 
 router.post("/refresh",refreshUsersSessionController)
+
+//şifre sıfırlama email gönderme endpoint'i
+
+router.post("/request-reset-email",validateRequest(requestResetEmailSchema),requestResetEmailController)
+
+//Şİfre sıfırlama
+
+router.post("/reset-password",validateRequest(resetPasswordSchema),resetPasswordController)
 
 export default router
