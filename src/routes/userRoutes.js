@@ -5,13 +5,15 @@ import {
     getUserById,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    uploadUserPhotoController
 } from "../controllers/userController.js"
 
 import {validateRequest} from "../middleware/validation.js"
 import {createUserSchema,updateUserSchema} from "../validators/userValidator.js"
 import { requireAdmin,requireAdminOrModerator } from "../middleware/checkRoles.js"
 import { authenticate } from "../middleware/auth.js"
+import upload from "../middleware/multer.js"
 
 const router = express.Router()
 
@@ -31,5 +33,9 @@ router.put("/:id",authenticate,requireAdmin,validateRequest(updateUserSchema), u
 // delete
 
 router.delete("/:id",authenticate,requireAdmin,deleteUser)
+
+//upload photo
+
+router.patch('/photo',authenticate,upload.single("photo"),uploadUserPhotoController )
 
 export default router
