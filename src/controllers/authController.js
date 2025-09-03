@@ -1,5 +1,6 @@
 import { ONE_DAY } from "../constants/index.js"
-import { registerUser, loginUser, logoutUser, refreshUsersSession, requestResetToken, resetPassword } from "../services/authServices.js"
+import { registerUser, loginUser, logoutUser, refreshUsersSession, requestResetToken, resetPassword, loginOrSignupWithGoogle } from "../services/authServices.js"
+import { generateAuthUrl } from "../utils/googleOAuth2.js"
 
 const setupSession = (res, session) => {
 
@@ -61,8 +62,8 @@ export const logoutUserController = async (req, res) => {
         res.clearCookie("refreshToken")
 
         res.status(200).json({
-            success:true,
-            message:"Çıkış başarılı"
+            success: true,
+            message: "Çıkış başarılı"
         })
 
     } catch (error) {
@@ -101,13 +102,13 @@ export const refreshUsersSessionController = async (req, res) => {
 
 // Şifre sıfırlama ve Email
 
-export const requestResetEmailController = async(req,res) => {
+export const requestResetEmailController = async (req, res) => {
     try {
         await requestResetToken(req.body.email)
         res.json({
-            success:true,
-            message:"Şifre sıfırlama maili başarıyla gönderildi",
-            data:{}
+            success: true,
+            message: "Şifre sıfırlama maili başarıyla gönderildi",
+            data: {}
         })
     } catch (error) {
         res.status(error.status || 500).json({
@@ -118,13 +119,13 @@ export const requestResetEmailController = async(req,res) => {
     }
 }
 
-export const resetPasswordController = async (req,res) =>{
+export const resetPasswordController = async (req, res) => {
     try {
         await resetPassword(req.body)
-         res.json({
-            success:true,
-            message:"Şifre sbaşarıyla sıfırlandı",
-            data:{}
+        res.json({
+            success: true,
+            message: "Şifre sbaşarıyla sıfırlandı",
+            data: {}
         })
     } catch (error) {
         res.status(error.status || 500).json({
@@ -134,3 +135,65 @@ export const resetPasswordController = async (req,res) =>{
         })
     }
 }
+
+export const getGoogleOAuthUrlController = async (req, res) => {
+    try {
+        const url = generateAuthUrl();
+        res.json({
+            status: 200,
+            message: 'Successfully get Google OAuth url!',
+            data: {
+                url,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Sunucu hatası",
+            error: error.message
+        })
+    }
+}
+
+export const loginWithGoogleController = async (req, res) => {
+
+  const code = req.query.code || req.body.code;
+  
+  
+  if (!code) {
+    return res.status(400).json({
+      success: false,
+      message: 'Authorization code is required'
+    });
+  }
+  
+  try {
+    const session = await loginOrSignupWithGoogle(code);
+    
+    res.cookie('sessionId', session._id, {
+      httpOnly: true,
+      expires: new Date(Date.now() + ONE_DAY),
+    });
+
+    if (req.method === 'GET') {
+      res.redirect('http://localhost:3001/dashboard?login=success');
+    } else {
+      res.status(200).json({
+        status: 200,
+        message: 'Successfully logged in via Google OAuth!',
+        data: { accessToken: session.accessToken },
+      });
+    }
+  } catch (error) {
+    console.error('Google OAuth Error:', error);
+    
+    if (req.method === 'GET') {
+      res.redirect('http://localhost:3001/login?error=oauth_failed');
+    } else {
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Google OAuth failed'
+      });
+    }
+  }
+};

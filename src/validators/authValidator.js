@@ -65,3 +65,13 @@ export const resetPasswordSchema = Joi.object({
             'any.required': "Token alanı zorunludur"
         })
 })
+
+// Google
+
+export const loginWithGoogleOAuthSchema = Joi.object({
+    code: Joi.string().required()
+        .messages({
+            'string.empty': "Kod alanı boş olamaz",
+            'any.required': "Kod alanı zorunludur"
+        })
+})

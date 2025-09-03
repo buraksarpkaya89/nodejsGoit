@@ -6,10 +6,12 @@ import {
     logoutUserController,
     refreshUsersSessionController,
     requestResetEmailController,
-    resetPasswordController
+    resetPasswordController,
+    loginWithGoogleController,
+    getGoogleOAuthUrlController
 } from "../controllers/authController.js"
 
-import {registerUserSchema,loginUserSchema, requestResetEmailSchema, resetPasswordSchema} from "../validators/authValidator.js"
+import {registerUserSchema,loginUserSchema, requestResetEmailSchema, resetPasswordSchema, loginWithGoogleOAuthSchema} from "../validators/authValidator.js"
 
 
 const router = express.Router()
@@ -37,5 +39,12 @@ router.post("/request-reset-email",validateRequest(requestResetEmailSchema),requ
 //Şİfre sıfırlama
 
 router.post("/reset-password",validateRequest(resetPasswordSchema),resetPasswordController)
+
+//Google Oauth Url alma
+
+router.get("/get-oauth-url", getGoogleOAuthUrlController)
+
+router.get("/confirm-oauth", loginWithGoogleController)
+router.post("/confirm-oauth", validateRequest(loginWithGoogleOAuthSchema),loginWithGoogleController)
 
 export default router

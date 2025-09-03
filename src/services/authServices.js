@@ -1,28 +1,29 @@
 import bcrypt from "bcryptjs";
 import User from "../db/models/User.js";
 import Session from "../db/models/Session.js";
-import { FIFTEEN_MINUTES,ONE_DAY, SMTP, TEMPLATES_DIR } from "../constants/index.js";
+import { FIFTEEN_MINUTES, ONE_DAY, SMTP, TEMPLATES_DIR } from "../constants/index.js";
 import createHttpError from "http-errors";
-import {randomBytes} from "crypto"
+import { randomBytes } from "crypto"
 import handlebars from "handlebars"
 import jwt from "jsonwebtoken"
 import path from "node:path"
 import fs from "node:fs/promises"
 import { env } from "../utils/env.js";
 import { sendEmail } from "../utils/sendMail.js";
+import { getFullNameFromGoogleTokenPayload, validateCode } from "../utils/googleOAuth2.js";
 
 
 export const registerUser = async (payload) => {
 
-    const user = await User.findOne({email:payload.email})
+    const user = await User.findOne({ email: payload.email })
 
-    if(user) throw createHttpError(409 ,"Email zaten kullanımda")
+    if (user) throw createHttpError(409, "Email zaten kullanımda")
 
     const encryptedPassword = await bcrypt.hash(payload.password, 10);
 
     return await User.create({
         ...payload,
-        password:encryptedPassword
+        password: encryptedPassword
     })
 
 }
@@ -35,27 +36,27 @@ export const createSession = () => {
         accessToken,
         refreshToken,
         accessTokenValidUntil: new Date(Date.now() + FIFTEEN_MINUTES),
-        refreshTokenValidUntil : new Date( Date.now() + ONE_DAY)
+        refreshTokenValidUntil: new Date(Date.now() + ONE_DAY)
     }
 }
 
 
 export const loginUser = async (payload) => {
-    const user = await User.findOne({email:payload.email}) // kullanıcıyı email ile kotrol et
+    const user = await User.findOne({ email: payload.email }) // kullanıcıyı email ile kotrol et
 
-    if(!user){
-        throw createHttpError(404,"Kullanıcı bulunamadı")
+    if (!user) {
+        throw createHttpError(404, "Kullanıcı bulunamadı")
     }
 
     //şifre karşılaştırma
 
-    const isEqual = await bcrypt.compare(payload.password,user.password)
+    const isEqual = await bcrypt.compare(payload.password, user.password)
 
-    if(!isEqual){
+    if (!isEqual) {
         throw createHttpError(401, "Unauthorized") // şifre yanlış
     }
 
-    await Session.deleteOne({userId: user._id})
+    await Session.deleteOne({ userId: user._id })
 
     const sessionData = createSession() // yeni oturum oluştu
 
@@ -67,28 +68,28 @@ export const loginUser = async (payload) => {
 }
 
 
-export const logoutUser = async (sessionId) =>{
-    await Session.deleteOne({_id: sessionId})
+export const logoutUser = async (sessionId) => {
+    await Session.deleteOne({ _id: sessionId })
 }
 
 
-export const refreshUsersSession = async({sessionId,refreshToken}) =>{
+export const refreshUsersSession = async ({ sessionId, refreshToken }) => {
     const session = await Session.findOne({
-        _id : sessionId,
+        _id: sessionId,
         refreshToken
     })
 
-    if(!session){
-        throw createHttpError(401,"Oturum bulunamadı")
+    if (!session) {
+        throw createHttpError(401, "Oturum bulunamadı")
     }
     const isSessionTokenExpired = new Date() > new Date(session.refreshTokenValidUntil)
 
-    if(isSessionTokenExpired){
+    if (isSessionTokenExpired) {
         throw createHttpError(401, "Oturumun token'ı expired olmuş")
     }
     const newSession = createSession()
 
-    await Session.deleteOne({_id: sessionId,refreshToken})
+    await Session.deleteOne({ _id: sessionId, refreshToken })
 
     return Session.create({
         userId: session.userId,
@@ -98,23 +99,23 @@ export const refreshUsersSession = async({sessionId,refreshToken}) =>{
 
 //Şİfre sıfırlama ve token oluşturma
 
-export const requestResetToken = async(email) => {
-    const user = await User.findOne({email})
+export const requestResetToken = async (email) => {
+    const user = await User.findOne({ email })
 
-    if(!user) {
-        throw createHttpError(404,"Kullanıcı bulunamadı")
+    if (!user) {
+        throw createHttpError(404, "Kullanıcı bulunamadı")
     }
 
     //jwt.sign(payload,secretkey or private key)
 
     const resetToken = jwt.sign(
         {
-            sub:user.id,
+            sub: user.id,
             email
         },
         env("JWT_SECRET"),
         {
-            expiresIn : "15m"
+            expiresIn: "15m"
         }
 
     )
@@ -136,12 +137,12 @@ export const requestResetToken = async(email) => {
 
     const html = template({
         name: user.name,
-        link:`${env("APP_DOMAIN")}/reset-password?token=${resetToken}`
+        link: `${env("APP_DOMAIN")}/reset-password?token=${resetToken}`
     })
 
     await sendEmail({
-        from:env(SMTP.SMTP_FROM),
-        to : email,
+        from: env(SMTP.SMTP_FROM),
+        to: email,
         subject: "Şİfre sıfırlama ekranı",
         html
     })
@@ -149,8 +150,8 @@ export const requestResetToken = async(email) => {
 }
 // şifre sıfırlama
 
-export const resetPassword = async ({token, password}) => {
-    let entires 
+export const resetPassword = async ({ token, password }) => {
+    let entires
 
     try {
         entires = jwt.verify(token, env("JWT_SECRET"))
@@ -161,25 +162,61 @@ export const resetPassword = async ({token, password}) => {
     //tokendan gelen bilgilerle kullanıcıyı bul
 
     const user = await User.findOne({
-        email:entires.email,
+        email: entires.email,
         _id: entires.sub,
     })
 
-    if(!user){
-        throw createHttpError(404,"Kullanıcı bulunamadı")
+    if (!user) {
+        throw createHttpError(404, "Kullanıcı bulunamadı")
     }
 
     //yeni şifreyi hashle
 
-    const encryptedPassword = await bcrypt.hash(password,10);
+    const encryptedPassword = await bcrypt.hash(password, 10);
 
     //kullanıcı şifresini güncelle
     await User.updateOne(
-        {_id: user._id},
-        { password:encryptedPassword}
+        { _id: user._id },
+        { password: encryptedPassword }
     )
 
     //güvenlik için tüm oturumları sonlandır
-    await Session.deleteMany({userId: user._id})
+    await Session.deleteMany({ userId: user._id })
 
+}
+
+export const loginOrSignupWithGoogle = async (code) => {
+    try {
+        const loginTicket = await validateCode(code);
+        const payload = loginTicket.getPayload();
+        if (!payload) throw createHttpError(401, "Unauthorized");
+
+
+        let user = await User.findOne({email:payload.email})
+
+        if(!user) {
+            const password = await bcrypt.hash(randomBytes(10).toString('hex'),10)
+
+            user = await User.create({
+                email: payload.email,
+                name: getFullNameFromGoogleTokenPayload(payload),
+                password,
+                role: "user"
+            })
+        }
+        // HATA BURADA: Session.find.deleteOne yerine Session.deleteOne olmalı
+        await Session.deleteOne({userId:user._id})
+
+        const newSession = createSession()
+
+        const session = await Session.create({
+            userId: user._id,
+            ...newSession
+        })
+
+        return session;
+
+    } catch (error) {
+        throw error
+    }
 }
