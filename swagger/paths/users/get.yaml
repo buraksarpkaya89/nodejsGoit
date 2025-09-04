@@ -1,0 +1,42 @@
+tags:
+  - Users
+summary: Get list of users
+operationId: getUsers
+description: "Get list of users with this endpoint"
+security:
+  - bearerAuth: []
+parameters:
+  - in: query
+    name: page
+    schema:
+      type: integer
+    example: 1
+  - in: query
+    name: perPage
+    schema:
+      type: integer
+      example: 10
+responses:
+  "200":
+    description: Successfully found users!
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - status
+            - message
+            - data
+          properties:
+            status:
+              type: integer
+              example: 200
+            message:
+              type: string
+              example: Successfully found users!
+            data:
+              type: array
+              items:
+                $ref: "../../components/schemas/user.yaml"
+  "401":
+    $ref: "../../components/responses/401.yaml"
